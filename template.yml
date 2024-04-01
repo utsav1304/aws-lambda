@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Product API written with SpringBoot with the aws-serverless-java-container library
+
+Globals:
+  Api:
+    # API Gateway regional endpoints
+    EndpointConfiguration: REGIONAL
+
+Resources:
+  ProductFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Handler: com.amway.product.LambdaHandler::handleRequest
+      Runtime: java17
+      CodeUri: .
+      MemorySize: 1512
+      Architectures:
+        - x86_64
+      Policies: AWSLambdaBasicExecutionRole
+      Timeout: 60
+      # Events:
+      #   HttpApiEvent:
+      #     Type: HttpApi
+      #     Properties:
+      #       TimeoutInMillis: 20000
+      #       PayloadFormatVersion: '1.0'
+      Events:
+        HttpApiEvent:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            TimeoutInMillis: 20000
+            PayloadFormatVersion: '1.0'
+    
+
+Outputs:
+  SpringBootProductApi:
+    Description: URL for application
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: SpringBootProductApi

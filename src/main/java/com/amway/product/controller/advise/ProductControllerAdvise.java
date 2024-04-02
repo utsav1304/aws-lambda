@@ -18,7 +18,6 @@ import com.amway.product.exception.ProductNotFoundException;
 import com.amway.product.responses.ErrorResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @RestControllerAdvice
 @Slf4j
@@ -28,70 +27,64 @@ public class ProductControllerAdvise {
 
 	@ExceptionHandler(ProductNotFoundException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-	public Mono<ErrorResponse> handleProductNotFoundException(ProductNotFoundException exception) {
+	public ErrorResponse handleProductNotFoundException(ProductNotFoundException exception) {
 		logException(exception);
-		var response = generateErrorResponse(FAILURE, Arrays.asList(exception.getMessage()));
-		response.setProductCode(exception.getProductCode());
+		var rresponse = generateErrorResponse(FAILURE, Arrays.asList(exception.getMessage()));
+		rresponse.setProductCode(exception.getProductCode());
 
-		return Mono.just(response);
+		return rresponse;
 	}
 
 	@ExceptionHandler(DuplicateKeyException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public Mono<ErrorResponse> handleDuplicateKeyException(DuplicateKeyException exception) {
+	public ErrorResponse handleDuplicateKeyException(DuplicateKeyException exception) {
 		logException(exception);
-		var response = generateErrorResponse(FAILURE, Arrays.asList("Product Already Exists"));
+		return generateErrorResponse(FAILURE, Arrays.asList("Product Already Exists"));
 
-		return Mono.just(response);
 	}
-
 
 	@ExceptionHandler(MissingRequestValueException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public Mono<ErrorResponse> handleMissingRequestValueException(MissingRequestValueException exception) {
+	public ErrorResponse handleMissingRequestValueException(MissingRequestValueException exception) {
 		logException(exception);
-		var response = generateErrorResponse(FAILURE, Arrays.asList(exception.getReason()));
-		return Mono.just(response);
+		return generateErrorResponse(FAILURE, Arrays.asList(exception.getReason()));
 	}
-	
+
 	@ExceptionHandler(ServerWebInputException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public Mono<ErrorResponse> handleInvalidInputException(ServerWebInputException exception) {
+	public ErrorResponse handleInvalidInputException(ServerWebInputException exception) {
 		logException(exception);
-		var response = generateErrorResponse(FAILURE, Arrays.asList(exception.getReason(), exception.getCause().toString()));
-		return Mono.just(response);
+		return generateErrorResponse(FAILURE, Arrays.asList(exception.getReason(), exception.getCause().toString()));
 	}
 
 	@ExceptionHandler(WebExchangeBindException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public Mono<ErrorResponse> handleInvalidInputExceptionValidation(WebExchangeBindException exception) {
+	public ErrorResponse handleInvalidInputExceptionValidation(WebExchangeBindException exception) {
 		logException(exception);
 		List<String> errorList = null;
 		if (!CollectionUtils.isEmpty(exception.getAllErrors())) {
-			 errorList = exception.getAllErrors().stream().map(ObjectError::getDefaultMessage).toList();
+			errorList = exception.getAllErrors().stream().map(ObjectError::getDefaultMessage).toList();
 		}
 
-		return Mono.just(generateErrorResponse(FAILURE, errorList));
+		return generateErrorResponse(FAILURE, errorList);
 	}
-	
+
 	@ExceptionHandler(Exception.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	public Mono<Object> handleException(Exception exception) {
+	public Object handleException(Exception exception) {
 		logException(exception);
-		var response = generateErrorResponse(FAILURE, Arrays.asList(exception.getMessage()));
+		return generateErrorResponse(FAILURE, Arrays.asList(exception.getMessage()));
 
-		return Mono.just(response);
 	}
 
 	/**
 	 * @param exception
-	 * @return 
+	 * @return
 	 */
 	private <T extends Throwable> void logException(T exception) {
 		log.error("Exception in Processing", exception);
 	}
-	
-	
+
 	/**
 	 * @return
 	 */

@@ -42,7 +42,6 @@ public class StorageServiceImpl implements StorageService {
 
 	private final AmazonS3 s3Client;
 
-	private final S3AsyncClient s3AsyncClient;
 
 	private final ProductService productService;
 
@@ -56,7 +55,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
-	public Mono<String> uploadFile(Path path, String productCode) {
+	public String uploadFile(Path path, String productCode) {
 		// AmazonS3Client awssS3Client = (AmazonS3Client) s3Client;
 		File fileObj = path.toFile();
 		var fileName = productCode + SLASH + fileObj.getName();
@@ -69,7 +68,7 @@ public class StorageServiceImpl implements StorageService {
 			Files.delete(path);
 		} catch (IOException e) {
 			e.printStackTrace();
-			return Mono.just("Error in deleting file");
+			return "Error in deleting file";
 		}
 		// awssS3Client.getResourceUrl(bucketName, fileName);
 		// awssS3Client.setBucketAcl(bucketName, CannedAccessControlList.PublicRead);
@@ -79,7 +78,7 @@ public class StorageServiceImpl implements StorageService {
 		var url = s3Client.getUrl(bucketName, fileName);
 		var response = "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + url.toString();
 
-		return Mono.just(response);
+		return response;
 	}
 
 	@Override
@@ -102,7 +101,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
-	public Mono<String> saveFile(Flux<ByteBuffer> body, HttpHeaders headers, String productCode) {
+	public String saveFile(Flux<ByteBuffer> body, HttpHeaders headers, String productCode) {
 		// String fileKey = UUID.randomUUID().toString();
 
 		MediaType mediaType = headers.getContentType();
@@ -110,22 +109,23 @@ public class StorageServiceImpl implements StorageService {
 		if (mediaType == null) {
 			mediaType = MediaType.APPLICATION_OCTET_STREAM;
 		}
-		CompletableFuture<?> future = s3AsyncClient
-				.putObject(software.amazon.awssdk.services.s3.model.PutObjectRequest.builder().bucket(bucketName)
-						.contentLength(headers.getContentLength()).key(fileName).contentType(mediaType.toString())
-						// .
-						.acl(CannedAccessControlList.PublicRead.toString())
-						// .metadata(metadata)
-						.build(), AsyncRequestBody.fromPublisher(body));
+//		CompletableFuture<?> future = s3AsyncClient
+//				.putObject(software.amazon.awssdk.services.s3.model.PutObjectRequest.builder().bucket(bucketName)
+//						.contentLength(headers.getContentLength()).key(fileName).contentType(mediaType.toString())
+//						// .
+//						.acl(CannedAccessControlList.PublicRead.toString())
+//						// .metadata(metadata)
+//						.build(), AsyncRequestBody.fromPublisher(body));
 
-		return Mono.fromFuture(future).map((response) -> {
-			var url = s3Client.getUrl(bucketName, fileName);
-			var imgUrl = url.toString();
-			productService
-					.updateProduct(UpdateProductRequest.builder().productCode(productCode).imagUrl(imgUrl).build())
-					.subscribe();
-			return "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + imgUrl;
-		});
+//		return Mono.fromFuture(future).map((response) -> {
+//			var url = s3Client.getUrl(bucketName, fileName);
+//			var imgUrl = url.toString();
+//			productService
+//					.updateProduct(UpdateProductRequest.builder().productCode(productCode).imagUrl(imgUrl).build());
+//			return "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + imgUrl;
+//		});
+		
+		return "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + "imgUrl";
 	}
 
 	private File convertMultiPartFileToFile(MultipartFile file) {

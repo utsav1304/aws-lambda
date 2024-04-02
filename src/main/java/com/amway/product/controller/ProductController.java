@@ -18,7 +18,6 @@ import com.amway.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Mono;
 
 @RestController("v1")
 @RequiredArgsConstructor
@@ -28,21 +27,21 @@ public class ProductController {
 
 	@GetMapping(value = "/product", produces = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "Get Product API")
-	public Mono<GetProductResponse> getProduct(
+	public GetProductResponse getProduct(
 			@RequestParam(name = "product_code", required = true) String productCode) {
 		return productService.getProduct(productCode);
 	}
 
 	@PostMapping(value = "/product", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "Save Product API")
-	public Mono<CreateProductResponse> addProduct(@RequestBody @Valid CreateProductRequest productRequest) {
+	public CreateProductResponse addProduct(@RequestBody @Valid CreateProductRequest productRequest) {
 		return productService.createProduct(productRequest);
 	}
 	
 	
 	@PutMapping(value = "/product", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "Update Product API")
-	public Mono<UpdateProductResponse> updateProduct(@RequestBody @Valid UpdateProductRequest productRequest) {
+	public UpdateProductResponse updateProduct(@RequestBody @Valid UpdateProductRequest productRequest) {
 		return productService.updateProduct(productRequest);
 	}
 }

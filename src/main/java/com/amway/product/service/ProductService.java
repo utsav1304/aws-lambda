@@ -6,13 +6,12 @@ import com.amway.product.responses.CreateProductResponse;
 import com.amway.product.responses.GetProductResponse;
 import com.amway.product.responses.UpdateProductResponse;
 
-import reactor.core.publisher.Mono;
 
 public interface ProductService {
 
-	Mono<GetProductResponse> getProduct(String productCode);
+	GetProductResponse getProduct(String productCode);
 	
-	Mono<CreateProductResponse> createProduct(CreateProductRequest createProduct);
+	CreateProductResponse createProduct(CreateProductRequest createProduct);
 
-	Mono<UpdateProductResponse> updateProduct(UpdateProductRequest productRequest);
+	UpdateProductResponse updateProduct(UpdateProductRequest productRequest);
 }

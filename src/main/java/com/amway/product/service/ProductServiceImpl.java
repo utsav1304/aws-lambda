@@ -15,7 +15,6 @@ import com.amway.product.responses.UpdateProductResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -25,35 +24,47 @@ public class ProductServiceImpl implements ProductService {
 	private final ProductRepo productRepo;
 
 	@Override
-	public Mono<GetProductResponse> getProduct(String productCode) {
+	public GetProductResponse getProduct(String productCode) {
 		log.debug(productCode);
-		var productResponse = productRepo.findByProductCode(productCode)
-				.switchIfEmpty(Mono.defer(() -> (Mono.error(new ProductNotFoundException(productCode)))));
+		var productResponse = productRepo.findByProductCode(productCode);
+				
+		if(Objects.isNull(productResponse)) {
+			throw new ProductNotFoundException(productCode);
+		}
 
-		return productResponse.map(this::mapGetResponse);
+		return mapGetResponse(productResponse);
 	}
 
 	@Override
-	public Mono<CreateProductResponse> createProduct(CreateProductRequest createProduct) {
+	public CreateProductResponse createProduct(CreateProductRequest createProduct) {
+ 
+		var savedProduct = productRepo.save(mapProduct(createProduct));
+		return generateCreateResponse(savedProduct);
+				
+	}
 
-		return productRepo.save(mapProduct(createProduct)).map(savedProduct -> {
-
-			var createResponse = CreateProductResponse.builder();
-			createResponse.status("Success").productCode(savedProduct.getProductCode());
-			return createResponse.build();
-
-		});
+	/**
+	 * @param savedProduct
+	 * @return
+	 */
+	private CreateProductResponse generateCreateResponse(Product savedProduct) {
+		var createResponse = CreateProductResponse.builder();
+		createResponse.status("Success").productCode(savedProduct.getProductCode());
+		return createResponse.build();
 	}
 
 	@Override
-	public Mono<UpdateProductResponse> updateProduct(UpdateProductRequest productRequest) {
+	public UpdateProductResponse updateProduct(UpdateProductRequest productRequest) {
 		var productCode = productRequest.getProductCode();
-		return productRepo.findById(productCode)
-				.switchIfEmpty(Mono.defer(() -> (Mono.error(new ProductNotFoundException(productCode)))))
-				.flatMap(product -> {
-					var updatedProduct = mapUpdateProduct(product, productRequest);
-					return productRepo.save(updatedProduct).map(this::buildUpdateResponse);
-				});
+		var existingProduct = productRepo.findById(productCode);
+		if (existingProduct.isEmpty()) {
+			throw new ProductNotFoundException(productCode);
+		}
+
+		var updatedProduct = mapUpdateProduct(existingProduct.get(), productRequest);
+		var updatedProductResponse = productRepo.save(updatedProduct);
+
+		return buildUpdateResponse(updatedProductResponse);
 	}
 
 	private UpdateProductResponse buildUpdateResponse(Product savedProduct) {

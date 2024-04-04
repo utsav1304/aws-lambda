@@ -3,7 +3,6 @@ package com.amway.product.controller.advise;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.ObjectError;
@@ -35,13 +34,13 @@ public class ProductControllerAdvise {
 		return rresponse;
 	}
 
-	@ExceptionHandler(DuplicateKeyException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponse handleDuplicateKeyException(DuplicateKeyException exception) {
-		logException(exception);
-		return generateErrorResponse(FAILURE, Arrays.asList("Product Already Exists"));
-
-	}
+//	@ExceptionHandler(DuplicateKeyException.class)
+//	@ResponseStatus(HttpStatus.BAD_REQUEST)
+//	public ErrorResponse handleDuplicateKeyException(DuplicateKeyException exception) {
+//		logException(exception);
+//		return generateErrorResponse(FAILURE, Arrays.asList("Product Already Exists"));
+//
+//	}
 
 	@ExceptionHandler(MissingRequestValueException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

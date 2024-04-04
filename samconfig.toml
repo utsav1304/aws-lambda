@@ -9,12 +9,21 @@ confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
 
-[dev.deploy.parameters]
-stack_name = "product-app"
-resolve_s3 = false
-s3_bucket = "sam-deploy-bucket-aws"
-s3_prefix = "product-app"
-region = "us-east-1"
-confirm_changeset = true
-capabilities = "CAPABILITY_IAM"
-image_repositories = []
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true

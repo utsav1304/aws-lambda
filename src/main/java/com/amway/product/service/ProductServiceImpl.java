@@ -27,18 +27,17 @@ public class ProductServiceImpl implements ProductService {
 	public GetProductResponse getProduct(String productCode) {
 		log.debug(productCode);
 		var productResponse = productRepo.findByProductCode(productCode);
-				
-		if(Objects.isNull(productResponse)) {
+		if(productResponse.isEmpty()) {
 			throw new ProductNotFoundException(productCode);
 		}
 
-		return mapGetResponse(productResponse);
+		return mapGetResponse(productResponse.get());
 	}
 
 	@Override
 	public CreateProductResponse createProduct(CreateProductRequest createProduct) {
  
-		var savedProduct = productRepo.save(mapProduct(createProduct));
+		var savedProduct = productRepo.putProduct(mapProduct(createProduct));
 		return generateCreateResponse(savedProduct);
 				
 	}
@@ -56,13 +55,13 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public UpdateProductResponse updateProduct(UpdateProductRequest productRequest) {
 		var productCode = productRequest.getProductCode();
-		var existingProduct = productRepo.findById(productCode);
+		var existingProduct = productRepo.findByProductCode(productCode);
 		if (existingProduct.isEmpty()) {
 			throw new ProductNotFoundException(productCode);
 		}
 
 		var updatedProduct = mapUpdateProduct(existingProduct.get(), productRequest);
-		var updatedProductResponse = productRepo.save(updatedProduct);
+		var updatedProductResponse = productRepo.putProduct(updatedProduct);
 
 		return buildUpdateResponse(updatedProductResponse);
 	}
@@ -95,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
 		if (Objects.nonNull(productRequest.getProductDescription())) {
 			product.setProductDescription(productRequest.getProductDescription());
 		}
-		product.setNewProduct(false);
+		//product.setNewProduct(false);
 
 		return product;
 	}
@@ -108,7 +107,7 @@ public class ProductServiceImpl implements ProductService {
 
 		product.price(productRequest.getPrice()).imagUrl(productRequest.getImagUrl()).isSellable(isSelleable);
 		product.productName(productRequest.getProductName()).productDescription(productRequest.getProductDescription());
-		product.productCode(productRequest.getProductCode()).newProduct(true);
+		product.productCode(productRequest.getProductCode());
 
 		return product.build();
 	}

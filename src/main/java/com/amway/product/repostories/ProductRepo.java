@@ -1,17 +1,74 @@
 package com.amway.product.repostories;
 
-import org.springframework.data.r2dbc.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
 import com.amway.product.repostories.model.Product;
 
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+
 @Repository
-public interface ProductRepo extends CrudRepository<Product, String> {
+@Slf4j
+public class ProductRepo {
 	
 	
-	@Query("SELECT * FROM product WHERE product_code = :productCode")
-	Product findByProductCode(@Param("productCode") String productCode);
+	private final DynamoDbEnhancedClient enhancedClient;
+	
+	private DynamoDbTable<Product> workTable;
+	
+	public ProductRepo(DynamoDbEnhancedClient enhancedClient) {
+		this.enhancedClient = enhancedClient;
+		workTable = this.enhancedClient.table("Product", TableSchema.fromBean(Product.class));
+	}
+	
+
+    // Put an item into a DynamoDB table.
+    public Product putProduct(Product product) {
+
+        try {
+           
+            workTable.putItem(product);
+            return product;
+
+        } catch (DynamoDbException e) {
+            log.error("Error in saving ",e);
+            throw e;
+        }
+    }
+    
+    public Optional<Product> getProduct(Product product) {
+
+        try {
+           
+            return Optional.ofNullable(workTable.getItem(product));
+            
+
+        } catch (DynamoDbException e) {
+            log.error("Error in getting ",e);
+            throw e;
+        }
+    }
+    
+    public Product updateProduct(Product product) {
+
+        try {
+           
+            return workTable.updateItem(product);
+
+        } catch (DynamoDbException e) {
+            log.error("Error in updating ",e);
+            throw e;
+        }
+    }
+
+
+	public Optional<Product> findByProductCode(String productCode) {
+		return getProduct(Product.builder().productCode(productCode).build());
+	}
 
 }

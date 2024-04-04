@@ -1,58 +1,41 @@
 package com.amway.product.repostories.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.ReadOnlyProperty;
-import org.springframework.data.domain.Persistable;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
-
-import jakarta.persistence.Transient;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @Data
 @Builder
-@Table(name = "product")
-public class Product implements Persistable<String>{
+@NoArgsConstructor
+@AllArgsConstructor
+@DynamoDbBean
+@DynamoDbImmutable(builder = Product.ProductBuilder.class)
+public class Product {
 
-	@Id
-	@Column("product_code")
-	//it can be sku or anything which identifies each product uniquely
 	private String productCode;
-	
-	@Column("product_name")
-	private String productName;
-	
-	@Column("product_description")
-	private String productDescription;
-	
-	@Column("imagage_url")
-	private String imagUrl;
-	
-	@Column("price")
-	private Double price;
-	
-	@Column("is_sellable")
-	private Boolean isSellable;
-	
 
-	@Override
-	public String getId() {
-		return this.productCode;
+	private String productName;
+
+	private String productDescription;
+
+	private String imagUrl;
+
+	private Double price;
+
+	private Boolean isSellable;
+
+	@DynamoDbPartitionKey
+	public String getProductCode() {
+		return productCode;
 	}
 
-
-	@ReadOnlyProperty
-    private Boolean newProduct;
-
-    @Override
-    @Transient
-    public boolean isNew() {
-        return this.newProduct || productCode == null;
-    }
-
-    public Product setAsNew() {
-        this.newProduct = Boolean.TRUE;
-        return this;
-    }
+	@DynamoDbSortKey
+	public String getProductName() {
+		return productName;
+	}
 }

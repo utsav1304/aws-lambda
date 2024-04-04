@@ -1,34 +1,25 @@
 package com.amway.product.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.util.IOUtils;
-import com.amway.product.requests.UpdateProductRequest;
+import com.amway.product.util.AsyncUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import software.amazon.awssdk.core.async.AsyncRequestBody;
-import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
 @Slf4j
@@ -37,105 +28,59 @@ public class StorageServiceImpl implements StorageService {
 
 	private static final String SLASH = "/";
 
-	@Value("${application.bucket.name}")
+	@Value("${amazon.s3.bucket.name}")
 	private String bucketName;
 
-	private final AmazonS3 s3Client;
+	private final S3Client s3Client;
 
 
-	private final ProductService productService;
+	private final AsyncUtil asyncUtil;
 
+	private final S3Utilities s3Utilities;
+	
 	@Override
-	public String uploadFile(MultipartFile file) {
-		File fileObj = convertMultiPartFileToFile(file);
-		String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-		s3Client.putObject(new PutObjectRequest(bucketName, fileName, fileObj));
-		// fileObj.delete();
-		return "File uploaded : " + fileName;
-	}
-
-	@Override
-	public String uploadFile(Path path, String productCode) {
-		// AmazonS3Client awssS3Client = (AmazonS3Client) s3Client;
-		File fileObj = path.toFile();
-		var fileName = productCode + SLASH + fileObj.getName();
-
-		var putObjReq = new PutObjectRequest(bucketName, fileName, fileObj);
-		putObjReq.setCannedAcl(CannedAccessControlList.PublicRead);
-		s3Client.putObject(putObjReq);
-		// fileObj.delete();
+	public String uploadFile(MultipartFile file, String productCode) {
+		var fileName = productCode + SLASH + file.getOriginalFilename();
+		var putReq = PutObjectRequest.builder().bucket(bucketName).key(fileName).acl(ObjectCannedACL.PUBLIC_READ)
+				.contentType(file.getContentType()).contentLength(file.getSize())
+				.build();
 		try {
-			Files.delete(path);
-		} catch (IOException e) {
+			s3Client.putObject(putReq, RequestBody.fromBytes(file.getBytes()));
+		} catch (AwsServiceException | SdkClientException | IOException e) {
 			e.printStackTrace();
-			return "Error in deleting file";
+			return "Error in Uploading file";
 		}
-		// awssS3Client.getResourceUrl(bucketName, fileName);
-		// awssS3Client.setBucketAcl(bucketName, CannedAccessControlList.PublicRead);
-		// awssS3Client.setObjectAcl(bucketName, fileName,
-		// CannedAccessControlList.PublicRead);
-		// var resourceUrl = awssS3Client.getResourceUrl(bucketName, fileName);
-		var url = s3Client.getUrl(bucketName, fileName);
-		var response = "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + url.toString();
-
-		return response;
+		
+		GetUrlRequest getUrlReq = GetUrlRequest.builder().bucket(bucketName).key(fileName).build();
+		var url = s3Utilities.getUrl(getUrlReq);
+		
+		asyncUtil.updateProductAsync(productCode, url);
+		return  "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + url.toString();
 	}
+
+
 
 	@Override
 	public byte[] downloadFile(String fileName) {
-		S3Object s3Object = s3Client.getObject(bucketName, fileName);
-		S3ObjectInputStream inputStream = s3Object.getObjectContent();
+		
+		var s3Object = s3Client.getObject(GetObjectRequest.builder().bucket(bucketName).key(fileName).build());
 		try {
-			return IOUtils.toByteArray(inputStream);
+			return s3Object.readAllBytes();
 		} catch (IOException e) {
 			e.printStackTrace();
+			log.error("Error while downloading",e);
 		}
 		return new byte[0];
 	}
 
 	@Override
 	public String deleteFile(String fileName) {
-		var delReq = new DeleteObjectRequest(bucketName, fileName);
+		//working
+		var delReq = 
+				DeleteObjectRequest.builder().bucket(bucketName).key(fileName).build();
 		s3Client.deleteObject(delReq);
 		return fileName + " removed ...";
 	}
 
-	@Override
-	public String saveFile(Flux<ByteBuffer> body, HttpHeaders headers, String productCode) {
-		// String fileKey = UUID.randomUUID().toString();
-
-		MediaType mediaType = headers.getContentType();
-		var fileName = productCode + SLASH + "img";
-		if (mediaType == null) {
-			mediaType = MediaType.APPLICATION_OCTET_STREAM;
-		}
-//		CompletableFuture<?> future = s3AsyncClient
-//				.putObject(software.amazon.awssdk.services.s3.model.PutObjectRequest.builder().bucket(bucketName)
-//						.contentLength(headers.getContentLength()).key(fileName).contentType(mediaType.toString())
-//						// .
-//						.acl(CannedAccessControlList.PublicRead.toString())
-//						// .metadata(metadata)
-//						.build(), AsyncRequestBody.fromPublisher(body));
-
-//		return Mono.fromFuture(future).map((response) -> {
-//			var url = s3Client.getUrl(bucketName, fileName);
-//			var imgUrl = url.toString();
-//			productService
-//					.updateProduct(UpdateProductRequest.builder().productCode(productCode).imagUrl(imgUrl).build());
-//			return "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + imgUrl;
-//		});
-		
-		return "Bucket Name :" + bucketName + ":File uploaded : " + fileName + "\n Url : " + "imgUrl";
-	}
-
-	private File convertMultiPartFileToFile(MultipartFile file) {
-		File convertedFile = new File(file.getOriginalFilename());
-		try (FileOutputStream fos = new FileOutputStream(convertedFile)) {
-			fos.write(file.getBytes());
-		} catch (IOException e) {
-			log.error("Error converting multipartFile to file", e);
-		}
-		return convertedFile;
-	}
 
 }

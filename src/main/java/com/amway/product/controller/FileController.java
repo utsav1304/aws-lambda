@@ -35,7 +35,7 @@ public class FileController {
 		return service.uploadFile(filePart, productCode);
 	}
 	
-    @GetMapping("/download")
+    @GetMapping(value ="/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ByteArrayResource> downloadFile(@RequestParam String fileName) {
         byte[] data = service.downloadFile(fileName);
         ByteArrayResource resource = new ByteArrayResource(data);
@@ -47,7 +47,7 @@ public class FileController {
                 .body(resource);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping(value = "/delete",produces = MediaType.TEXT_PLAIN_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> deleteFile(@RequestParam String fileName) {
         return new ResponseEntity<>(service.deleteFile(fileName), HttpStatus.OK);
     }

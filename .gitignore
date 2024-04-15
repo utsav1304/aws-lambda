@@ -59,3 +59,7 @@ out/
 
 ### VS Code ###
 .vscode/
+ 
+##aws##
+
+.aws-sam/

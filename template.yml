@@ -38,6 +38,21 @@ Resources:
             Method: ANY
             TimeoutInMillis: 20000
             PayloadFormatVersion: '1.0'
+            
+  ProductDynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: Product
+     # DeletionPolicy: Retain
+      AttributeDefinitions:
+        - AttributeName: productCode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: productCode
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
     
 
 Outputs:
@@ -49,3 +64,6 @@ Outputs:
   ProductFunction:
     Description: "ProductFunction Lambda Function ARN"
     Value: !GetAtt ProductFunction.Arn
+    
+  DynamoDBTableName:
+    Value: !Ref ProductDynamoDBTable

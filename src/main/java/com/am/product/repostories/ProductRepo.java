@@ -19,7 +19,7 @@ public class ProductRepo {
 	
 	private final DynamoDbEnhancedClient enhancedClient;
 	
-	private DynamoDbTable<Product> workTable;
+	private final DynamoDbTable<Product> workTable;
 	
 	public ProductRepo(DynamoDbEnhancedClient enhancedClient) {
 		this.enhancedClient = enhancedClient;

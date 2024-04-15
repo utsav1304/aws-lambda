@@ -43,8 +43,7 @@ Resources:
 Outputs:
   SpringBootProductApi:
     Description: URL for application
-    #Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
-    Value: !Get
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
     Export:
       Name: SpringBootProductApi
   ProductFunction:

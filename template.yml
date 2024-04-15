@@ -17,7 +17,12 @@ Resources:
       MemorySize: 1512
       Architectures:
         - x86_64
+      EphemeralStorage:
+        Size: 512
+      PackageType: Zip
       Policies: AWSLambdaBasicExecutionRole
+      SnapStart:
+       ApplyOn: PublishedVersions
       Timeout: 60
       # Events:
       #   HttpApiEvent:
@@ -38,6 +43,10 @@ Resources:
 Outputs:
   SpringBootProductApi:
     Description: URL for application
-    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+    #Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Get
     Export:
       Name: SpringBootProductApi
+  ProductFunction:
+    Description: "ProductFunction Lambda Function ARN"
+    Value: !GetAtt ProductFunction.Arn

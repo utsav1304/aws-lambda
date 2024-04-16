@@ -8,6 +8,12 @@ Globals:
     EndpointConfiguration: REGIONAL
 
 Resources:
+  ProductAPI:
+    Type: AWS::Serverless::Api
+    #DeletionPolicy: Retain
+    Properties:
+      StageName: dev
+      Name: ProductAPI
   ProductFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -24,23 +30,19 @@ Resources:
       SnapStart:
        ApplyOn: PublishedVersions
       Timeout: 60
-      # Events:
-      #   HttpApiEvent:
-      #     Type: HttpApi
-      #     Properties:
-      #       TimeoutInMillis: 20000
-      #       PayloadFormatVersion: '1.0'
+      
       Events:
-        HttpApiEvent:
-          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        ApiEvent:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /{proxy+}
             Method: ANY
             TimeoutInMillis: 20000
-            PayloadFormatVersion: '1.0'
+            RestApiId: !Ref ProductAPI
             
   ProductDynamoDBTable:
     Type: 'AWS::DynamoDB::Table'
+    DeletionPolicy: Retain
     Properties:
       TableName: Product
      # DeletionPolicy: Retain
@@ -53,12 +55,34 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: '5'
         WriteCapacityUnits: '5'
+      BillingMode: PROVISIONED
+      ContributorInsightsSpecification:
+        Enabled: TRUE
+        
+        
+        
+  ProductImageS3:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: product-bucket-us
+      PublicAccessBlockConfiguration: 
+        BlockPublicAcls: FALSE
+        BlockPublicPolicy: FALSE
+        IgnorePublicAcls: FALSE
+        RestrictPublicBuckets: FALSE
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+
+     
+
     
 
 Outputs:
   SpringBootProductApi:
     Description: URL for application
-    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub 'https://${ProductAPI}.execute-api.${AWS::Region}.amazonaws.com'
     Export:
       Name: SpringBootProductApi
   ProductFunction:
@@ -66,4 +90,13 @@ Outputs:
     Value: !GetAtt ProductFunction.Arn
     
   DynamoDBTableName:
+    Description: "Product Table Name"
     Value: !Ref ProductDynamoDBTable
+    
+  DynamoDBTableArn:
+    Description: "Product Table Arn"
+    Value: !GetAtt ProductFunction.Arn
+    
+  S3BucketName:
+    Description: "S3BucketName For image"
+    Value: !Ref ProductImageS3

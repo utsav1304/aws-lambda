@@ -57,7 +57,7 @@ Resources:
         WriteCapacityUnits: '5'
       BillingMode: PROVISIONED
       ContributorInsightsSpecification:
-        Enabled: TRUE
+        Enabled: FALSE  #disable because of cost
         
         
         

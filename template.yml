@@ -57,8 +57,7 @@ Resources:
         WriteCapacityUnits: '5'
       BillingMode: PROVISIONED
       ContributorInsightsSpecification:
-        Enabled: FALSE  #disable because of cost
-        
+        Enabled: false  #disable because of cost
         
         
   ProductImageS3:
@@ -67,15 +66,35 @@ Resources:
     Properties:
       BucketName: product-bucket-us
       PublicAccessBlockConfiguration: 
-        BlockPublicAcls: FALSE
-        BlockPublicPolicy: FALSE
-        IgnorePublicAcls: FALSE
-        RestrictPublicBuckets: FALSE
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
 
-     
+  ProductCloudFrontdistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        #Aliases:
+          #- product.aws.api.in
+        #CNAMEs: 
+          #- product.aws.api.in
+        Origins:
+          - Id: productApiOrigin
+            DomainName: !Sub '${ProductAPI}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: https-only
+          TargetOriginId: productApiOrigin
+          ForwardedValues:
+              QueryString: true  #depreciated
 
     
 
@@ -95,8 +114,12 @@ Outputs:
     
   DynamoDBTableArn:
     Description: "Product Table Arn"
-    Value: !GetAtt ProductFunction.Arn
+    Value: !GetAtt ProductDynamoDBTable.Arn
     
   S3BucketName:
     Description: "S3BucketName For image"
     Value: !Ref ProductImageS3
+    
+  CloudFrontDomainName:
+    Description: "Domain Name For CloudFront"
+    Value: !GetAtt ProductCloudFrontdistribution.DomainName

@@ -1,4 +1,6 @@
 version = 0.1
+
+
 [default.deploy.parameters]
 stack_name = "product-app"
 resolve_s3 = false

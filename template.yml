@@ -14,6 +14,9 @@ Resources:
     Properties:
       StageName: dev
       Name: ProductAPI
+      BinaryMediaTypes:
+        - multipart/form-data
+        - application/json
   ProductFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -45,7 +48,6 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       TableName: Product
-     # DeletionPolicy: Retain
       AttributeDefinitions:
         - AttributeName: productCode
           AttributeType: S
@@ -80,9 +82,9 @@ Resources:
       DistributionConfig:
         Enabled: true
         #Aliases:
-          #- product.aws.api.in
+          #- product.cloudfront.net
         #CNAMEs: 
-          #- product.aws.api.in
+          #- product.cloudfront.net
         Origins:
           - Id: productApiOrigin
             DomainName: !Sub '${ProductAPI}.execute-api.${AWS::Region}.amazonaws.com'
@@ -93,8 +95,44 @@ Resources:
         DefaultCacheBehavior:
           ViewerProtocolPolicy: https-only
           TargetOriginId: productApiOrigin
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
+          CachedMethods:
+            - GET
+            - HEAD
           ForwardedValues:
               QueryString: true  #depreciated
+              Cookies: 
+                Forward: all
+          DefaultTTL: 30
+          MaxTTL: 30          
+        CacheBehaviors:
+          - PathPattern: /dev/*  # Path pattern to match requests starting with /dev/
+            TargetOriginId: productApiOrigin
+            ViewerProtocolPolicy: https-only
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Cookies: 
+                Forward: all
+            DefaultTTL: 30
+            MaxTTL: 30
 
     
 

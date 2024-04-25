@@ -10,7 +10,7 @@ Globals:
 Resources:
   ProductAPI:
     Type: AWS::Serverless::Api
-    #DeletionPolicy: Retain
+   # DeletionPolicy: Retain
     Properties:
       StageName: dev
       Name: ProductAPI
@@ -45,7 +45,7 @@ Resources:
             
   ProductDynamoDBTable:
     Type: 'AWS::DynamoDB::Table'
-    DeletionPolicy: Retain
+    #DeletionPolicy: Retain
     Properties:
       TableName: Product
       AttributeDefinitions:
@@ -64,7 +64,7 @@ Resources:
         
   ProductImageS3:
     Type: 'AWS::S3::Bucket'
-    DeletionPolicy: Retain
+    #DeletionPolicy: Retain
     Properties:
       BucketName: product-bucket-us
       PublicAccessBlockConfiguration: 

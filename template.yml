@@ -30,6 +30,7 @@ Resources:
         Size: 512
       PackageType: Zip
       Policies: AWSLambdaBasicExecutionRole
+      AutoPublishAlias: SnapStart
       SnapStart:
        ApplyOn: PublishedVersions
       Timeout: 60
